@@ -5,6 +5,7 @@ import com.fitness.userservice.dto.UserResponse;
 import com.fitness.userservice.model.User;
 import com.fitness.userservice.repositery.UserReposertiry;
 import jakarta.validation.Valid;
+import jdk.jshell.spi.ExecutionControl;
 import org.hibernate.annotations.Audited;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,11 @@ public class UserService {
     UserReposertiry userReposertiry;
     public UserResponse register(@Valid RegisterRequest request) {
 
-        User user = new User();
+        if(userReposertiry.existsByEmail(request.getEmail()))
+        {
+            throw new RuntimeException("Email already exists");
+        }
+         User user = new User();
 
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
@@ -29,9 +34,25 @@ public class UserService {
         userResponse.setLastname(saveduser.getLastname());
         userResponse.setEmail(saveduser.getEmail());
         userResponse.setPassword(saveduser.getPassword());
+        userResponse.setCreatedAt(saveduser.getCreatedAt());
+        userResponse.setUpdatedAt(saveduser.getUpdatedAt());
         return userResponse;
-
-
-
     }
+
+    public UserResponse getUserprofile(String userId) {
+        User user = userReposertiry.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserResponse userResponse = new UserResponse();
+        userResponse.setId(user.getId());
+        userResponse.setFirstname(user.getFirstname());
+        userResponse.setLastname(user.getLastname());
+        userResponse.setEmail(user.getEmail());
+        userResponse.setPassword(user.getPassword());
+        userResponse.setCreatedAt(user.getCreatedAt());
+        userResponse.setUpdatedAt(user.getUpdatedAt());
+        return userResponse;
+    }
+
+
 }
