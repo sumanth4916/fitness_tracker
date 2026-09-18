@@ -6,11 +6,13 @@ import com.fitness.userservice.model.User;
 import com.fitness.userservice.repositery.UserReposertiry;
 import jakarta.validation.Valid;
 import jdk.jshell.spi.ExecutionControl;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Audited;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class UserService {
     @Autowired
     UserReposertiry userReposertiry;
@@ -55,4 +57,8 @@ public class UserService {
     }
 
 
+    public Boolean existByUserId(String userId) {
+        log.info("validating user id");
+        return userReposertiry.existsById(userId);
+    }
 }
