@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ActivityMessageListner {
 
-    ActivityAiService aiService;
+    private final ActivityAiService aiService;
 
 
     @RabbitListener(queues = "activity.queue")

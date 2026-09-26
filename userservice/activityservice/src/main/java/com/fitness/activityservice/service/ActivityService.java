@@ -45,9 +45,11 @@ public class ActivityService {
         Activity savedActivity = activityRepositery.save(activity);
 
 
-        //publish to Rabitamq
+        log.info("Publishing activity id={} for user={} to exchange={} with routingKey={}",
+            savedActivity.getId(), savedActivity.getUserId(), exchange, routingKey);
         try{
         rabbitTemplate.convertAndSend(exchange, routingKey, savedActivity);
+        log.info("Activity id={} published successfully", savedActivity.getId());
         }
         catch (Exception e){
             log.error("Failed to publish activity to RabbitMQ", e);

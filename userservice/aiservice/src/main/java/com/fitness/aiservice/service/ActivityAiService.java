@@ -1,6 +1,10 @@
 package com.fitness.aiservice.service;
 
 import com.fitness.aiservice.model.Activity;
+import com.fitness.aiservice.model.Recommendation;
+import com.fitness.aiservice.repositery.RecommendationsRepositerty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -10,12 +14,28 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ActivityAiService {
 
-    GeminiService geminiService;
-    public String generateRecommendation (Activity activity){
+    private final GeminiService geminiService;
+    private final RecommendationsRepositerty recommendationsRepositerty;
+    private final ObjectMapper objectMapper;
+
+    public Recommendation generateRecommendation(Activity activity) {
         String prompt = createPromptForActivity(activity);
         String aiResponse = geminiService.getAnswer(prompt);
         log.info("Gemini response is {}", aiResponse);
-        return aiResponse;
+
+      try {
+        JsonNode response = objectMapper.readTree(aiResponse);
+        String recommendationJson = response.path("candidates").path(0)
+            .path("content").path("parts").path(0).path("text").asText();
+        Recommendation recommendation = objectMapper.readValue(
+            recommendationJson, Recommendation.class);
+        recommendation.setActivityId(activity.getId());
+        recommendation.setUserId(activity.getUserId());
+        recommendation.setActivityType(activity.getType());
+        return recommendationsRepositerty.save(recommendation);
+      } catch (Exception exception) {
+        throw new IllegalStateException("Could not parse or save Gemini recommendation", exception);
+      }
     }
 
     private String createPromptForActivity(Activity activity) {
@@ -64,6 +84,7 @@ public class ActivityAiService {
         """.formatted(
                 activity.getId(),
                 activity.getUserId(),
+                activity.getType(),
                 activity.getDuration(),
                 activity.getCaloriesBurned(),
                 activity.getStartTime(),
